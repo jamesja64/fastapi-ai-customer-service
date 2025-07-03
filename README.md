@@ -114,7 +114,7 @@ pip install -r requirements.txt
 export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/ai_customer_service"
 export REDIS_URL="redis://localhost:6379/0"
 export SECRET_KEY="your-secret-key-here"
-export OLLAMA_BASE_URL="http://61.66.218.112:30300"
+export OLLAMA_BASE_URL="http://localhost:11434"
 ```
 
 ### 4. 啟動開發服務器
@@ -302,3 +302,30 @@ fastapi-ai-customer-service/
 ### 致謝
 
 感謝所有開源社群的貢獻者，讓這個專案得以實現。
+
+## 安全性注意事項
+
+### 環境變數配置
+
+1. **複製環境變數範例文件**：
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **修改 .env 文件中的敏感信息**：
+   - `SECRET_KEY`: 使用強密碼生成器生成
+   - `OLLAMA_BASE_URL`: 設置為您的 Ollama 服務地址
+   - `DATABASE_URL`: 設置實際的資料庫連接信息
+
+3. **絕不要將 .env 文件提交到版本控制**：
+   - .env 文件已在 .gitignore 中排除
+   - 只提交 .env.example 作為範例
+
+### 生產環境部署
+
+- 更改所有預設密碼和密鑰
+- 使用 HTTPS 連接
+- 設置適當的 CORS 政策
+- 定期更新依賴套件
+- 監控和記錄安全事件
+

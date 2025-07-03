@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Ollama AI 配置
-    OLLAMA_BASE_URL: str = "http://61.66.218.112:30300"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:14b"
     OLLAMA_TIMEOUT: int = 30
     

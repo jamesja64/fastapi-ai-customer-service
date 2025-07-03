@@ -12,6 +12,6 @@
     }
   ],
   "env": {
-    "OLLAMA_BASE_URL": "http://61.66.218.112:30300"
+    "OLLAMA_BASE_URL": "http://localhost:11434"
   }
 }
