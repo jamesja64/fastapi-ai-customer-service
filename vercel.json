@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/main.py"
+    }
+  ],
+  "env": {
+    "OLLAMA_BASE_URL": "http://61.66.218.112:30300"
+  }
+}

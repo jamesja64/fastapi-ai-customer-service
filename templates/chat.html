@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}AI 智能客服 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 聊天主區域 -->
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">AI 智能客服</h5>
+                            <small>
+                                <span class="status-indicator status-online"></span>
+                                線上服務
+                            </small>
+                        </div>
+                        <div class="ms-auto">
+                            <button class="btn btn-outline-light btn-sm" onclick="clearChat()">
+                                <i class="fas fa-trash me-1"></i>清空對話
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-container">
+                    <!-- 聊天消息區域 -->
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- 歡迎消息 -->
+                        <div class="message assistant">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                您好！我是 AI 智能客服小助手，很高興為您服務。請問有什麼可以幫助您的嗎？
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 輸入區域 -->
+                    <div class="chat-input">
+                        <form id="chatForm" class="d-flex">
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                class="form-control me-2" 
+                                placeholder="請輸入您的問題..."
+                                autocomplete="off"
+                                required
+                            >
+                            <button type="submit" class="btn btn-primary" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        
+                        <!-- 快速回復按鈕 -->
+                        <div class="mt-2">
+                            <small class="text-muted">快速問題：</small>
+                            <div class="mt-1">
+                                <button class="btn btn-outline-secondary btn-sm me-1 mb-1" onclick="sendQuickMessage('如何重設密碼？')">
+                                    重設密碼
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm me-1 mb-1" onclick="sendQuickMessage('如何聯繫客服？')">
+                                    聯繫客服
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm me-1 mb-1" onclick="sendQuickMessage('系統支援哪些瀏覽器？')">
+                                    瀏覽器支援
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm me-1 mb-1" onclick="sendQuickMessage('如何創建工單？')">
+                                    創建工單
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 側邊欄 -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <!-- 服務狀態 -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>服務狀態
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>AI 服務</span>
+                        <span id="aiServiceStatus" class="badge bg-secondary">檢查中...</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>回應時間</span>
+                        <span id="responseTime" class="text-muted">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 使用提示 -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>使用提示
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            描述問題時請盡量詳細
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            可以使用快速問題按鈕
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            支援多輪對話上下文
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            如需人工客服請說明
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 聊天相關變數
+let chatHistory = [];
+let isTyping = false;
+
+// 頁面載入時初始化
+document.addEventListener('DOMContentLoaded', function() {
+    checkAIServiceStatus();
+    setupChatForm();
+    
+    // 定期檢查服務狀態
+    setInterval(checkAIServiceStatus, 30000);
+});
+
+// 設置聊天表單
+function setupChatForm() {
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message && !isTyping) {
+            sendMessage(message);
+            messageInput.value = '';
+        }
+    });
+    
+    // 自動聚焦輸入框
+    messageInput.focus();
+}
+
+// 發送消息
+async function sendMessage(message) {
+    if (isTyping) return;
+    
+    // 添加用戶消息到聊天區域
+    addMessage(message, 'user');
+    
+    // 顯示 AI 正在輸入
+    showTypingIndicator();
+    
+    try {
+        const startTime = Date.now();
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                context: chatHistory.slice(-5) // 只發送最近5條消息作為上下文
+            })
+        });
+        
+        const endTime = Date.now();
+        updateResponseTime(endTime - startTime);
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // 移除輸入指示器
+            hideTypingIndicator();
+            
+            // 添加 AI 回應
+            addMessage(data.response, 'assistant');
+            
+            // 更新聊天歷史
+            chatHistory.push(
+                { role: 'user', content: message },
+                { role: 'assistant', content: data.response }
+            );
+            
+        } else {
+            hideTypingIndicator();
+            addMessage('抱歉，服務暫時不可用，請稍後再試。', 'assistant', true);
+        }
+        
+    } catch (error) {
+        console.error('發送消息錯誤:', error);
+        hideTypingIndicator();
+        addMessage('網絡錯誤，請檢查連接後重試。', 'assistant', true);
+    }
+}
+
+// 添加消息到聊天區域
+function addMessage(content, type, isError = false) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const avatarIcon = type === 'user' ? 'fas fa-user' : 'fas fa-robot';
+    const messageClass = isError ? 'message-content text-danger' : 'message-content';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">
+            <i class="${avatarIcon}"></i>
+        </div>
+        <div class="${messageClass}">
+            ${content}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 顯示 AI 正在輸入指示器
+function showTypingIndicator() {
+    isTyping = true;
+    const sendButton = document.getElementById('sendButton');
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<span class="loading"></span>';
+    
+    const chatMessages = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message assistant';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div class="message-avatar">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+            <span class="loading"></span> 正在輸入...
+        </div>
+    `;
+    
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 隱藏輸入指示器
+function hideTypingIndicator() {
+    isTyping = false;
+    const sendButton = document.getElementById('sendButton');
+    sendButton.disabled = false;
+    sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+// 快速發送消息
+function sendQuickMessage(message) {
+    if (!isTyping) {
+        sendMessage(message);
+    }
+}
+
+// 清空聊天
+function clearChat() {
+    if (confirm('確定要清空對話記錄嗎？')) {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = `
+            <div class="message assistant">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    您好！我是 AI 智能客服小助手，很高興為您服務。請問有什麼可以幫助您的嗎？
+                </div>
+            </div>
+        `;
+        chatHistory = [];
+    }
+}
+
+// 檢查 AI 服務狀態
+async function checkAIServiceStatus() {
+    try {
+        const response = await fetch('/api/chat/health');
+        const data = await response.json();
+        
+        const statusElement = document.getElementById('aiServiceStatus');
+        if (data.ai_service === 'online') {
+            statusElement.textContent = '正常';
+            statusElement.className = 'badge bg-success';
+        } else {
+            statusElement.textContent = '離線';
+            statusElement.className = 'badge bg-danger';
+        }
+    } catch (error) {
+        const statusElement = document.getElementById('aiServiceStatus');
+        statusElement.textContent = '錯誤';
+        statusElement.className = 'badge bg-danger';
+    }
+}
+
+// 更新回應時間
+function updateResponseTime(ms) {
+    const responseTimeElement = document.getElementById('responseTime');
+    responseTimeElement.textContent = `${ms}ms`;
+}
+</script>
+{% endblock %}

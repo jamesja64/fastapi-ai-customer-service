@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}用戶註冊 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        用戶註冊
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- 註冊表單 -->
+                    <form id="registerForm" class="auth-form">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用戶名 *</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="username" 
+                                name="username" 
+                                required
+                                placeholder="請輸入用戶名"
+                                minlength="3"
+                                maxlength="20"
+                            >
+                            <div class="form-text">3-20個字符，只能包含字母、數字和下劃線</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">郵箱地址 *</label>
+                            <input 
+                                type="email" 
+                                class="form-control" 
+                                id="email" 
+                                name="email" 
+                                required
+                                placeholder="請輸入郵箱地址"
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">全名</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="full_name" 
+                                name="full_name" 
+                                placeholder="請輸入您的全名（可選）"
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密碼 *</label>
+                            <input 
+                                type="password" 
+                                class="form-control" 
+                                id="password" 
+                                name="password" 
+                                required
+                                placeholder="請輸入密碼"
+                                minlength="6"
+                            >
+                            <div class="form-text">至少6個字符</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">確認密碼 *</label>
+                            <input 
+                                type="password" 
+                                class="form-control" 
+                                id="confirm_password" 
+                                name="confirm_password" 
+                                required
+                                placeholder="請再次輸入密碼"
+                            >
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                我同意 <a href="#" class="text-decoration-none">服務條款</a> 和 <a href="#" class="text-decoration-none">隱私政策</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success" data-original-text="註冊">
+                                <i class="fas fa-user-plus me-2"></i>註冊
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        已有帳戶？
+                        <a href="/auth/login" class="text-decoration-none">立即登入</a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 註冊說明 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        註冊說明
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            註冊後即可使用 AI 智能客服功能
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            支援創建和管理客服工單
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            訪問完整的知識庫搜索功能
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            個人化的服務體驗
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 處理註冊表單提交
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirm_password');
+    
+    // 檢查密碼確認
+    if (password !== confirmPassword) {
+        showError('密碼和確認密碼不匹配');
+        return;
+    }
+    
+    const registerData = {
+        username: formData.get('username'),
+        email: formData.get('email'),
+        password: password,
+        full_name: formData.get('full_name') || null
+    };
+    
+    try {
+        showLoading(this);
+        
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(registerData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showSuccess('註冊成功！正在跳轉到登入頁面...');
+            
+            // 跳轉到登入頁面
+            setTimeout(() => {
+                window.location.href = '/auth/login';
+            }, 2000);
+            
+        } else {
+            showError(result.detail || '註冊失敗');
+        }
+        
+    } catch (error) {
+        console.error('註冊錯誤:', error);
+        showError('網絡錯誤，請稍後重試');
+    } finally {
+        hideLoading(this);
+    }
+});
+
+// 實時密碼確認檢查
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (confirmPassword && password !== confirmPassword) {
+        this.setCustomValidity('密碼不匹配');
+        this.classList.add('is-invalid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+    }
+});
+
+// 用戶名格式檢查
+document.getElementById('username').addEventListener('input', function() {
+    const username = this.value;
+    const pattern = /^[a-zA-Z0-9_]+$/;
+    
+    if (username && !pattern.test(username)) {
+        this.setCustomValidity('用戶名只能包含字母、數字和下劃線');
+        this.classList.add('is-invalid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}

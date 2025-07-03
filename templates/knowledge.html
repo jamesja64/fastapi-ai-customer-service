@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+
+{% block title %}知識庫 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 頁面標題和搜索 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>
+                    <i class="fas fa-book me-2"></i>
+                    知識庫
+                </h2>
+                <div class="btn-group">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFAQModal">
+                        <i class="fas fa-plus me-2"></i>新增 FAQ
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createDocModal">
+                        <i class="fas fa-file-plus me-2"></i>新增文檔
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 搜索框 -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="searchInput" 
+                            placeholder="搜索 FAQ 和知識庫文檔..."
+                            onkeypress="handleSearchKeyPress(event)"
+                        >
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="performSearch()">
+                            <i class="fas fa-search me-1"></i>搜索
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearSearch()">
+                            <i class="fas fa-times me-1"></i>清除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統計卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">FAQ 總數</h6>
+                            <h3 id="totalFAQs">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-question-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">文檔總數</h6>
+                            <h3 id="totalDocs">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">總瀏覽量</h6>
+                            <h3 id="totalViews">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-eye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">有用評價</h6>
+                            <h3 id="helpfulVotes">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-thumbs-up fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- FAQ 區域 -->
+        <div class="col-lg-8">
+            <!-- 類別篩選 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="categoryFilter" class="form-label">類別篩選</label>
+                            <select class="form-select" id="categoryFilter" onchange="loadFAQs()">
+                                <option value="">所有類別</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times me-1"></i>清除篩選
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ 列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        常見問題 (FAQ)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="faqList">
+                        <!-- FAQ 項目將通過 JavaScript 動態載入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 側邊欄 -->
+        <div class="col-lg-4">
+            <!-- 熱門類別 -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        熱門類別
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="popularCategories">
+                        <!-- 類別將動態載入 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 知識庫文檔 -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        知識庫文檔
+                    </h6>
+                    <button class="btn btn-outline-primary btn-sm" onclick="showAllDocs()">
+                        查看全部
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="knowledgeDocs">
+                        <!-- 文檔將動態載入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 創建 FAQ 模態框 -->
+<div class="modal fade" id="createFAQModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增 FAQ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createFAQForm">
+                    <div class="mb-3">
+                        <label for="faqQuestion" class="form-label">問題 *</label>
+                        <input type="text" class="form-control" id="faqQuestion" name="question" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faqAnswer" class="form-label">答案 *</label>
+                        <textarea class="form-control" id="faqAnswer" name="answer" rows="5" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="faqCategory" class="form-label">類別</label>
+                                <select class="form-select" id="faqCategory" name="category">
+                                    <option value="一般問題">一般問題</option>
+                                    <option value="帳戶管理">帳戶管理</option>
+                                    <option value="技術支援">技術支援</option>
+                                    <option value="客服支援">客服支援</option>
+                                    <option value="工單管理">工單管理</option>
+                                    <option value="服務時間">服務時間</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="faqTags" class="form-label">標籤</label>
+                                <input type="text" class="form-control" id="faqTags" name="tags" 
+                                       placeholder="用逗號分隔多個標籤">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="createFAQ()">創建 FAQ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 創建文檔模態框 -->
+<div class="modal fade" id="createDocModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增知識庫文檔</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createDocForm">
+                    <div class="mb-3">
+                        <label for="docTitle" class="form-label">文檔標題 *</label>
+                        <input type="text" class="form-control" id="docTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="docSummary" class="form-label">文檔摘要</label>
+                        <textarea class="form-control" id="docSummary" name="summary" rows="2"
+                                  placeholder="簡短描述文檔內容（可選）"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="docContent" class="form-label">文檔內容 *</label>
+                        <textarea class="form-control" id="docContent" name="content" rows="10" required
+                                  placeholder="請輸入詳細的文檔內容..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="docCategory" class="form-label">文檔類別</label>
+                                <select class="form-select" id="docCategory" name="category">
+                                    <option value="使用指南">使用指南</option>
+                                    <option value="API 文檔">API 文檔</option>
+                                    <option value="技術文檔">技術文檔</option>
+                                    <option value="操作手冊">操作手冊</option>
+                                    <option value="故障排除">故障排除</option>
+                                    <option value="最佳實踐">最佳實踐</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="docTags" class="form-label">標籤</label>
+                                <input type="text" class="form-control" id="docTags" name="tags"
+                                       placeholder="用逗號分隔多個標籤">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" onclick="createDoc()">創建文檔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ 詳情模態框 -->
+<div class="modal fade" id="faqDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">FAQ 詳情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="faqDetailContent">
+                <!-- FAQ 詳情內容將動態載入 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-success" id="helpfulBtn" onclick="markHelpful()">
+                    <i class="fas fa-thumbs-up me-1"></i>有用
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文檔詳情模態框 -->
+<div class="modal fade" id="docDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">文檔詳情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="docDetailContent">
+                <!-- 文檔詳情內容將動態載入 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" id="editDocBtn" onclick="editDoc()">
+                    <i class="fas fa-edit me-1"></i>編輯
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFAQs = [];
+let currentFAQId = null;
+let currentDocId = null;
+
+// 頁面載入時初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadCategories();
+    loadFAQs();
+    loadKnowledgeDocs();
+});
+
+// 載入統計數據
+async function loadStats() {
+    try {
+        const response = await fetch('/api/knowledge/api/stats');
+        const stats = await response.json();
+        
+        document.getElementById('totalFAQs').textContent = stats.total_faqs;
+        document.getElementById('totalDocs').textContent = stats.total_documents;
+        document.getElementById('totalViews').textContent = stats.total_views;
+        document.getElementById('helpfulVotes').textContent = stats.total_helpful_votes;
+        
+    } catch (error) {
+        console.error('載入統計失敗:', error);
+    }
+}
+
+// 載入類別
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/knowledge/api/categories');
+        const data = await response.json();
+        
+        // 更新類別篩選器
+        const categoryFilter = document.getElementById('categoryFilter');
+        categoryFilter.innerHTML = '<option value="">所有類別</option>';
+        
+        data.faq_categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+        
+        // 更新熱門類別
+        const popularCategories = document.getElementById('popularCategories');
+        popularCategories.innerHTML = '';
+        
+        data.all_categories.forEach(category => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary me-1 mb-1';
+            badge.style.cursor = 'pointer';
+            badge.textContent = category;
+            badge.onclick = () => filterByCategory(category);
+            popularCategories.appendChild(badge);
+        });
+        
+    } catch (error) {
+        console.error('載入類別失敗:', error);
+    }
+}
+
+// 載入 FAQ 列表
+async function loadFAQs() {
+    try {
+        const category = document.getElementById('categoryFilter').value;
+        let url = '/api/knowledge/api/faq';
+        
+        if (category) {
+            url += `?category=${encodeURIComponent(category)}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        currentFAQs = data.faqs;
+        renderFAQList(data.faqs);
+        
+    } catch (error) {
+        console.error('載入 FAQ 失敗:', error);
+        showError('載入 FAQ 失敗');
+    }
+}
+
+// 載入知識庫文檔
+async function loadKnowledgeDocs() {
+    try {
+        const response = await fetch('/api/knowledge/api/knowledge');
+        const data = await response.json();
+        
+        renderKnowledgeDocs(data.documents);
+        
+    } catch (error) {
+        console.error('載入知識庫文檔失敗:', error);
+    }
+}
+
+// 渲染 FAQ 列表
+function renderFAQList(faqs) {
+    const faqList = document.getElementById('faqList');
+    faqList.innerHTML = '';
+    
+    if (faqs.length === 0) {
+        faqList.innerHTML = '<p class="text-muted text-center">暫無 FAQ 數據</p>';
+        return;
+    }
+    
+    faqs.forEach(faq => {
+        const faqItem = document.createElement('div');
+        faqItem.className = 'knowledge-item border rounded p-3 mb-3';
+        faqItem.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-2">
+                        <a href="#" onclick="showFAQDetail('${faq.id}')" class="text-decoration-none">
+                            ${faq.question}
+                        </a>
+                    </h6>
+                    <p class="text-muted mb-2">${faq.answer.substring(0, 150)}${faq.answer.length > 150 ? '...' : ''}</p>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-light text-dark me-2">${faq.category}</span>
+                        ${faq.tags.map(tag => `<span class="tag me-1">${tag}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block">
+                        <i class="fas fa-eye me-1"></i>${faq.view_count}
+                    </small>
+                    <small class="text-muted">
+                        <i class="fas fa-thumbs-up me-1"></i>${faq.helpful_count}
+                    </small>
+                </div>
+            </div>
+        `;
+        faqList.appendChild(faqItem);
+    });
+}
+
+// 渲染知識庫文檔
+function renderKnowledgeDocs(docs) {
+    const knowledgeDocs = document.getElementById('knowledgeDocs');
+    knowledgeDocs.innerHTML = '';
+
+    if (docs.length === 0) {
+        knowledgeDocs.innerHTML = '<p class="text-muted">暫無文檔</p>';
+        return;
+    }
+
+    docs.forEach(doc => {
+        const docItem = document.createElement('div');
+        docItem.className = 'mb-3 pb-2 border-bottom';
+        docItem.innerHTML = `
+            <h6 class="mb-1">
+                <a href="#" onclick="showDocDetail('${doc.id}')" class="text-decoration-none">${doc.title}</a>
+            </h6>
+            <p class="text-muted small mb-1">${doc.summary || '暫無摘要'}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-light text-dark">${doc.category}</span>
+                <small class="text-muted">
+                    <i class="fas fa-eye me-1"></i>${doc.view_count}
+                </small>
+            </div>
+        `;
+        knowledgeDocs.appendChild(docItem);
+    });
+}
+
+// 顯示 FAQ 詳情
+async function showFAQDetail(faqId) {
+    try {
+        const response = await fetch(`/api/knowledge/api/faq/${faqId}`);
+        const faq = await response.json();
+        
+        currentFAQId = faqId;
+        
+        const content = document.getElementById('faqDetailContent');
+        content.innerHTML = `
+            <div class="mb-3">
+                <h6>問題</h6>
+                <p class="bg-light p-3 rounded">${faq.question}</p>
+            </div>
+            <div class="mb-3">
+                <h6>答案</h6>
+                <div class="bg-light p-3 rounded">${faq.answer.replace(/\n/g, '<br>')}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>類別</h6>
+                    <span class="badge bg-primary">${faq.category}</span>
+                </div>
+                <div class="col-md-6">
+                    <h6>標籤</h6>
+                    ${faq.tags.map(tag => `<span class="tag me-1">${tag}</span>`).join('')}
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-eye me-1"></i>瀏覽次數: ${faq.view_count}
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-thumbs-up me-1"></i>有用評價: ${faq.helpful_count}
+                    </small>
+                </div>
+            </div>
+        `;
+        
+        // 顯示模態框
+        new bootstrap.Modal(document.getElementById('faqDetailModal')).show();
+        
+    } catch (error) {
+        console.error('載入 FAQ 詳情失敗:', error);
+        showError('載入 FAQ 詳情失敗');
+    }
+}
+
+// 標記有用
+async function markHelpful() {
+    if (!currentFAQId) return;
+    
+    try {
+        const response = await fetch(`/api/knowledge/api/faq/${currentFAQId}/helpful`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showSuccess(result.message);
+            
+            // 更新按鈕狀態
+            const helpfulBtn = document.getElementById('helpfulBtn');
+            helpfulBtn.innerHTML = '<i class="fas fa-check me-1"></i>已標記';
+            helpfulBtn.disabled = true;
+            
+            // 重新載入數據
+            loadFAQs();
+            loadStats();
+        }
+    } catch (error) {
+        console.error('標記有用失敗:', error);
+        showError('操作失敗');
+    }
+}
+
+// 創建 FAQ
+async function createFAQ() {
+    const form = document.getElementById('createFAQForm');
+    const formData = new FormData(form);
+    
+    const faqData = {
+        question: formData.get('question'),
+        answer: formData.get('answer'),
+        category: formData.get('category'),
+        tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : []
+    };
+    
+    try {
+        const response = await fetch('/api/knowledge/api/faq', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(faqData)
+        });
+        
+        if (response.ok) {
+            const newFAQ = await response.json();
+            showSuccess('FAQ 創建成功！');
+            
+            // 關閉模態框並重新載入數據
+            bootstrap.Modal.getInstance(document.getElementById('createFAQModal')).hide();
+            form.reset();
+            loadFAQs();
+            loadStats();
+        } else {
+            const error = await response.json();
+            showError(error.detail || '創建 FAQ 失敗');
+        }
+    } catch (error) {
+        console.error('創建 FAQ 錯誤:', error);
+        showError('網絡錯誤，請稍後重試');
+    }
+}
+
+// 執行搜索
+async function performSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) {
+        showError('請輸入搜索關鍵詞');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/knowledge/api/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        renderSearchResults(data.results, query);
+        
+    } catch (error) {
+        console.error('搜索失敗:', error);
+        showError('搜索失敗');
+    }
+}
+
+// 渲染搜索結果
+function renderSearchResults(results, query) {
+    const faqList = document.getElementById('faqList');
+    faqList.innerHTML = '';
+    
+    if (results.length === 0) {
+        faqList.innerHTML = `<p class="text-muted text-center">沒有找到包含 "${query}" 的結果</p>`;
+        return;
+    }
+    
+    const header = document.createElement('div');
+    header.className = 'mb-3';
+    header.innerHTML = `<h6>搜索結果 (${results.length} 項)</h6>`;
+    faqList.appendChild(header);
+    
+    results.forEach(result => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'knowledge-item border rounded p-3 mb-3';
+        resultItem.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-2">
+                        <span class="badge bg-secondary me-2">${result.type === 'faq' ? 'FAQ' : '文檔'}</span>
+                        ${result.title}
+                    </h6>
+                    <p class="text-muted mb-2">${result.content}</p>
+                    <span class="badge bg-light text-dark">${result.category}</span>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">
+                        匹配度: ${result.score}
+                    </small>
+                </div>
+            </div>
+        `;
+        faqList.appendChild(resultItem);
+    });
+}
+
+// 處理搜索按鍵
+function handleSearchKeyPress(event) {
+    if (event.key === 'Enter') {
+        performSearch();
+    }
+}
+
+// 清除搜索
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    loadFAQs();
+}
+
+// 按類別篩選
+function filterByCategory(category) {
+    document.getElementById('categoryFilter').value = category;
+    loadFAQs();
+}
+
+// 清除篩選
+function clearFilters() {
+    document.getElementById('categoryFilter').value = '';
+    loadFAQs();
+}
+
+// 創建文檔
+async function createDoc() {
+    const form = document.getElementById('createDocForm');
+    const formData = new FormData(form);
+
+    const docData = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        summary: formData.get('summary') || null,
+        category: formData.get('category'),
+        tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : []
+    };
+
+    try {
+        const response = await fetch('/api/knowledge/api/knowledge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(docData)
+        });
+
+        if (response.ok) {
+            const newDoc = await response.json();
+            showSuccess('文檔創建成功！');
+
+            // 關閉模態框並重新載入數據
+            bootstrap.Modal.getInstance(document.getElementById('createDocModal')).hide();
+            form.reset();
+            loadKnowledgeDocs();
+            loadStats();
+        } else {
+            const error = await response.json();
+            showError(error.detail || '創建文檔失敗');
+        }
+    } catch (error) {
+        console.error('創建文檔錯誤:', error);
+        showError('網絡錯誤，請稍後重試');
+    }
+}
+
+// 顯示文檔詳情
+async function showDocDetail(docId) {
+    try {
+        const response = await fetch(`/api/knowledge/api/knowledge/${docId}`);
+        const doc = await response.json();
+
+        currentDocId = docId;
+
+        const content = document.getElementById('docDetailContent');
+        content.innerHTML = `
+            <div class="mb-3">
+                <h4>${doc.title}</h4>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-primary me-2">${doc.category}</span>
+                    ${doc.tags.map(tag => `<span class="tag me-1">${tag}</span>`).join('')}
+                </div>
+                ${doc.summary ? `<p class="text-muted">${doc.summary}</p>` : ''}
+            </div>
+            <div class="mb-3">
+                <h6>內容</h6>
+                <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${doc.content}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-eye me-1"></i>瀏覽次數: ${doc.view_count}
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>創建時間: ${formatDate(doc.created_at)}
+                    </small>
+                </div>
+            </div>
+        `;
+
+        // 顯示模態框
+        new bootstrap.Modal(document.getElementById('docDetailModal')).show();
+
+    } catch (error) {
+        console.error('載入文檔詳情失敗:', error);
+        showError('載入文檔詳情失敗');
+    }
+}
+
+// 顯示所有文檔
+function showAllDocs() {
+    // 這裡可以實現跳轉到專門的文檔列表頁面
+    // 或者在當前頁面展開顯示所有文檔
+    alert('功能開發中：將跳轉到完整的文檔列表頁面');
+}
+
+// 編輯文檔（預留功能）
+function editDoc() {
+    alert('編輯功能開發中');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}用戶登入 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        用戶登入
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- 登入表單 -->
+                    <form id="loginForm" class="auth-form">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用戶名</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="username" 
+                                name="username" 
+                                required
+                                placeholder="請輸入用戶名"
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密碼</label>
+                            <input 
+                                type="password" 
+                                class="form-control" 
+                                id="password" 
+                                name="password" 
+                                required
+                                placeholder="請輸入密碼"
+                            >
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                記住我
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" data-original-text="登入">
+                                <i class="fas fa-sign-in-alt me-2"></i>登入
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- 演示帳戶 -->
+                    <div class="text-center">
+                        <h6 class="text-muted mb-3">演示帳戶</h6>
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="fillLogin('admin', 'admin123')">
+                                    <i class="fas fa-user-shield me-1"></i>
+                                    管理員 (admin/admin123)
+                                </button>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="fillLogin('user1', 'user123')">
+                                    <i class="fas fa-user me-1"></i>
+                                    普通用戶 (user1/user123)
+                                </button>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="fillLogin('demo', 'demo123')">
+                                    <i class="fas fa-user-tag me-1"></i>
+                                    演示用戶 (demo/demo123)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        還沒有帳戶？
+                        <a href="/auth/register" class="text-decoration-none">立即註冊</a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- API 測試區域 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-code me-2"></i>
+                        API 測試
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">您也可以直接測試 API 端點：</p>
+                    <div class="bg-light p-3 rounded">
+                        <code>
+                            POST /api/auth/login<br>
+                            Content-Type: application/json<br><br>
+                            {<br>
+                            &nbsp;&nbsp;"username": "admin",<br>
+                            &nbsp;&nbsp;"password": "admin123"<br>
+                            }
+                        </code>
+                    </div>
+                    <div class="mt-2">
+                        <a href="/docs#/認證/login_api_auth_login_post" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            在 API 文檔中測試
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 填充登入表單
+function fillLogin(username, password) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+}
+
+// 處理登入表單提交
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const loginData = {
+        username: formData.get('username'),
+        password: formData.get('password')
+    };
+    
+    try {
+        showLoading(this);
+        
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(loginData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // 保存認證信息
+            localStorage.setItem('access_token', result.access_token);
+            localStorage.setItem('current_user', JSON.stringify(result.user));
+            
+            showSuccess('登入成功！正在跳轉...');
+            
+            // 跳轉到聊天頁面
+            setTimeout(() => {
+                window.location.href = '/chat';
+            }, 1500);
+            
+        } else {
+            showError(result.detail || '登入失敗');
+        }
+        
+    } catch (error) {
+        console.error('登入錯誤:', error);
+        showError('網絡錯誤，請稍後重試');
+    } finally {
+        hideLoading(this);
+    }
+});
+
+// 頁面載入時檢查是否已登入
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        // 已登入，詢問是否跳轉
+        if (confirm('您已經登入，是否跳轉到聊天頁面？')) {
+            window.location.href = '/chat';
+        }
+    }
+});
+</script>
+{% endblock %}
