@@ -283,3 +283,22 @@ fastapi-ai-customer-service/
 ---
 
 **注意：** 這是一個展示專案，包含的測試數據和配置僅用於演示目的。在生產環境中請修改所有默認密碼和密鑰。
+
+
+## License
+
+本專案採用 MIT License 授權 - 詳見 [LICENSE](LICENSE) 文件。
+
+### 第三方組件
+
+本專案使用了以下開源組件，詳細的授權信息請參見 [NOTICE](NOTICE) 文件：
+
+- **Bootstrap 5.3.0** - MIT License
+- **Font Awesome 6.0.0** - Font Awesome Free License
+- **FastAPI** - MIT License
+- **Uvicorn** - BSD License
+- **其他 Python 依賴** - 各自的開源授權
+
+### 致謝
+
+感謝所有開源社群的貢獻者，讓這個專案得以實現。

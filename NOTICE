@@ -1,0 +1,84 @@
+FastAPI AI Customer Service Platform
+Copyright (c) 2024 jamesja64
+
+This project includes software developed by third parties:
+
+================================================================================
+
+Bootstrap
+Copyright (c) 2011-2023 The Bootstrap Authors
+License: MIT License
+Source: https://getbootstrap.com/
+Used: CSS framework for responsive design
+
+================================================================================
+
+Font Awesome Free
+Copyright (c) Fonticons, Inc.
+License: 
+- Icons: CC BY 4.0 License (https://creativecommons.org/licenses/by/4.0/)
+- Fonts: SIL OFL 1.1 License (https://scripts.sil.org/OFL)
+- Code: MIT License
+Source: https://fontawesome.com/
+Used: Icon fonts and CSS
+
+================================================================================
+
+FastAPI
+Copyright (c) 2018 Sebastián Ramírez
+License: MIT License
+Source: https://fastapi.tiangolo.com/
+Used: Python web framework
+
+================================================================================
+
+Uvicorn
+Copyright (c) 2017-present, Encode OSS Ltd.
+License: BSD License
+Source: https://www.uvicorn.org/
+Used: ASGI server
+
+================================================================================
+
+Pydantic
+Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors
+License: MIT License
+Source: https://pydantic.dev/
+Used: Data validation library
+
+================================================================================
+
+python-jose
+Copyright (c) 2016 Michael Davis
+License: MIT License
+Source: https://github.com/mpdavis/python-jose
+Used: JWT token handling
+
+================================================================================
+
+Passlib
+Copyright (c) 2008-2020 Assurance Technologies LLC
+License: BSD License
+Source: https://passlib.readthedocs.io/
+Used: Password hashing
+
+================================================================================
+
+HTTPX
+Copyright (c) 2019 Tom Christie
+License: BSD License
+Source: https://www.python-httpx.org/
+Used: HTTP client for AI service integration
+
+================================================================================
+
+Jinja2
+Copyright 2007 Pallets
+License: BSD License
+Source: https://jinja.palletsprojects.com/
+Used: Template engine
+
+================================================================================
+
+This software may include other open source software components. Each component 
+is subject to its own license terms.
